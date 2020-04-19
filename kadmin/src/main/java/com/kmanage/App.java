@@ -71,13 +71,14 @@ public class App {
         char[] password = { 'r', 'o', 'o', 't', 'p', 'a', 's', 's', 'w', 'o', 'r', 'd' };
         MongoCredential credential = MongoCredential.createCredential("root", "admin", password);
         MongoClient mongoClient = new MongoClient(new ServerAddress("mongodb", 27017), Arrays.asList(credential));
-        MongoDatabase database = mongoClient.getDatabase("test");
+        MongoDatabase database = mongoClient.getDatabase("kafkamonitor");
 
         // insert a document
         for (String key : res.keySet()) {
-            MongoCollection<Document> collection = database.getCollection("mycoll");
             String Cluster = "MUTU_HP-100";
-            String json = "{_id : '" + ObjectId.get() + "', cluster : '" + Cluster + "', topic : '" + key + "', size : '" + res.get(key) + "', time : '" + new Date().toInstant() +"'}";
+            MongoCollection<Document> collection = database.getCollection(Cluster);
+            String json = "{_id : '" + ObjectId.get() + "', topic : '" + key + "', size : '" + res.get(key) + "', time : '" + new Date().toInstant() +"'}";
+//            String json = "{_id : '" + ObjectId.get() + "', cluster : '" + Cluster + "', topic : '" + key + "', size : '" + res.get(key) + "', time : '" + new Date().toInstant() +"'}";
             collection.insertOne(new Document(BasicDBObject.parse(json)));
         }
 
