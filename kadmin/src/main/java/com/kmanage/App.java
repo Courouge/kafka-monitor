@@ -75,10 +75,10 @@ public class App {
 
         // insert a document
         for (String key : res.keySet()) {
+            MongoCollection<Document> collection = database.getCollection("topics");
             String Cluster = "MUTU_HP-100";
-            MongoCollection<Document> collection = database.getCollection(Cluster);
-            String json = "{_id : '" + ObjectId.get() + "', topic : '" + key + "', size : '" + res.get(key) + "', time : '" + new Date().toInstant() +"'}";
-//            String json = "{_id : '" + ObjectId.get() + "', cluster : '" + Cluster + "', topic : '" + key + "', size : '" + res.get(key) + "', time : '" + new Date().toInstant() +"'}";
+//            String json = "{_id : '" + ObjectId.get() + "', topic : '" + key + "', size : '" + res.get(key) + "', time : '" + new Date().toInstant() +"'}";
+            String json = "{_id : '" + ObjectId.get() + "', cluster : '" + Cluster + "', topic : '" + key + "', size : '" + res.get(key) + "', time : '" + new Date().toInstant() +"'}";
             collection.insertOne(new Document(BasicDBObject.parse(json)));
         }
 

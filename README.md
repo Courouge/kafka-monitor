@@ -24,11 +24,13 @@ docker-compose exec kafka-1 bash -c 'KAFKA_OPTS="" kafka-consumer-perf-test --me
 ```bash
 docker-compose exec mongodb bash -c 'mongo admin -u root -p rootpassword'
 ```
+- Basics command
+```bash
+show dbs
+show collections
+db.topics.find()
+```
 - Data Structure Exemple
 ```bash
-{ "_id" : "5e9c59ac0da6245fddf2c7e0", "topic" : "__confluent.support.metrics", "size" : "11367", "time" : "2020-04-19T14:01:16.366Z" }
-```
-## Links
-```bash
-https://dev.to/sonyarianto/how-to-spin-mongodb-server-with-docker-and-docker-compose-2lef
+{ "_id" : "5e9c5e6007b9401756553735", "cluster" : "MUTU_HP-100", "topic" : "__confluent.support.metrics", "size" : "11367", "time" : "2020-04-19T14:21:20.052Z" }
 ```
