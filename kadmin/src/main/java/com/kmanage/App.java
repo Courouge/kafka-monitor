@@ -38,58 +38,48 @@ import org.apache.kafka.common.message.DescribeLogDirsResponseData;
 
 import com.kmanage.LogDirTopic;
 
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.ServerAddress;
+import com.mongodb.MongoCredential;
+import com.mongodb.MongoClient;
+import org.bson.Document;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.DBCollection;
+import com.mongodb.client.MongoCollection;
+import static com.mongodb.client.model.Filters.*;
+import com.mongodb.client.model.CreateCollectionOptions;
+import com.mongodb.client.model.ValidationOptions;
+import com.mongodb.BasicDBObject;
+import org.bson.BsonString;
+import java.nio.charset.Charset;
+import org.bson.types.ObjectId;
+import java.util.Date;
+
 public class App {
     public static void main(String[] args) throws ExecutionException, InterruptedException {
         Properties config = new Properties();
-        config.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, "172.17.0.1:9092,172.17.0.1:9093");
+        config.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka-1:9092,kafka-2:9092,kafka-3:9092");
         AdminClient admin = AdminClient.create(config);
-        // Print topics list
-//        admin.listTopics().names().get().forEach(System.out::println);
-        // Print topics config
-//        admin.describeCluster().nodes().get().forEach(System.out::println);
 
-//        List<String> list = Arrays.asList("test4");
-//        System.out.println(admin.describeTopics(list).all().get());
-
-        String Topic = "Hello-Kafka-2";
-        DescribeTopicsResult describeTopicsResult = admin.describeTopics(Collections.singletonList(Topic));
-        KafkaFuture<Map<String, TopicDescription>> all = describeTopicsResult.all();
-        try {
-            Map<String, TopicDescription> topicDescriptions = all.get(30, TimeUnit.SECONDS);
-            TopicDescription topicDescription = topicDescriptions.get(Topic);
-
-            List<TopicPartitionInfo> topic_partitions_info = topicDescription.partitions();
-//            System.out.println("topic: " + topicDescription.name());
-//            System.out.println("partition: " + topic_partitions_info.get(0).partition());
-//            System.out.println("leader: " + topic_partitions_info.get(0).leader().id());
-
-//            System.out.println(all);
-//            KafkaFuture{value={Hello-Kafka-2=(name=Hello-Kafka-2, internal=false, partitions=(partition=0, leader=127.0.0.1:9092 (id: 1 rack: null), replicas=127.0.0.1:9092 (id: 1 rack: null), 127.0.0.1:9093 (id: 2 rack: null), isr=127.0.0.1:9092 (id: 1 rack: null), 127.0.0.1:9093 (id: 2 rack: null)),(partition=1, leader=127.0.0.1:9093 (id: 2 rack: null), replicas=127.0.0.1:9093 (id: 2 rack: null), 127.0.0.1:9092 (id: 1 rack: null), isr=127.0.0.1:9093 (id: 2 rack: null), 127.0.0.1:9092 (id: 1 rack: null)),(partition=2, leader=127.0.0.1:9092 (id: 1 rack: null), replicas=127.0.0.1:9092 (id: 1 rack: null), 127.0.0.1:9093 (id: 2 rack: null), isr=127.0.0.1:9092 (id: 1 rack: null), 127.0.0.1:9093 (id: 2 rack: null)), authorizedOperations=[])},exception=null,done=true}
-
-            List<Integer> replica = new ArrayList<Integer>();
-            List<Integer> isr = new ArrayList<Integer>();
-
-            for(int i=0;i<topic_partitions_info.get(0).replicas().size();i++){
-                replica.add(topic_partitions_info.get(0).replicas().get(i).id());
-            }
-
-            for(int i=0;i<topic_partitions_info.get(0).isr().size();i++){
-                isr.add(topic_partitions_info.get(0).replicas().get(i).id());
-            }
-//            System.out.println("replicas: " + replica);
-//            System.out.println("isr: " + isr);
-
-        }
-        catch (Exception e) {
-            System.out.println("exception in kafka => " + e);
-        }
         // get log size from admin client
         String describeLogDirs = admin.describeLogDirs(Arrays.asList(1)).all().get().get(1).get("/var/lib/kafka/data").toString();
         LogDirTopic LogSizeTopic = new LogDirTopic();
         Map<String, String> res =  LogSizeTopic.bytopic(describeLogDirs);
-        System.out.println(res);
+//        System.out.println(res);
+
+        char[] password = { 'r', 'o', 'o', 't', 'p', 'a', 's', 's', 'w', 'o', 'r', 'd' };
+        MongoCredential credential = MongoCredential.createCredential("root", "admin", password);
+        MongoClient mongoClient = new MongoClient(new ServerAddress("mongodb", 27017), Arrays.asList(credential));
+        MongoDatabase database = mongoClient.getDatabase("test");
+
+        // insert a document
+        for (String key : res.keySet()) {
+            MongoCollection<Document> collection = database.getCollection("mycoll");
+            String Cluster = "MUTU_HP-100";
+            String json = "{_id : '" + ObjectId.get() + "', cluster : '" + Cluster + "', topic : '" + key + "', size : '" + res.get(key) + "', time : '" + new Date().toInstant() +"'}";
+            collection.insertOne(new Document(BasicDBObject.parse(json)));
+        }
+
     }
 }
-
-// Hello-Kafka-2-1=7844602
-// sur disque      7892992 (soit 48390 de plus) 8K size of directory
