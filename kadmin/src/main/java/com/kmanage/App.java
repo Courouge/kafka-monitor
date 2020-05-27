@@ -74,15 +74,15 @@ import org.apache.kafka.clients.admin.DescribeAclsResult;
 
 public class App {
     public static void main(String[] args) throws ExecutionException, InterruptedException {
-        // Kafka connect
+        // Kafka config
         Properties config = new Properties();
 //        String jaasTemplate = "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"%s\" password=\"%s\";";
         String jaasTemplate = "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"%s\" password=\"%s\";";
-        config.put("bootstrap.servers", "kafka-1:9092,kafka-2:9092,kafka-3:9092");
+        String brokers = "kafka-1:9092,kafka-2:9092,kafka-3:9092";
+        config.put("bootstrap.servers", brokers);
         config.put("security.protocol", "SASL_PLAINTEXT");
         config.put("sasl.mechanism", "PLAIN");
         config.put("sasl.jaas.config", String.format(jaasTemplate, "test", "test"));
-
         AdminClient admin = AdminClient.create(config);
 
         // Mongodb connect
@@ -91,44 +91,50 @@ public class App {
         MongoClient mongoClient = new MongoClient(new ServerAddress("mongodb", 27017), Arrays.asList(credential));
         MongoDatabase database = mongoClient.getDatabase("kafkamonitor");
 
-        // get log size from kafka admin client
-        String describeLogDirs = admin.describeLogDirs(Arrays.asList(1)).all().get().get(1).get("/var/lib/kafka/data").toString();
+        // declare vars
         LogDirTopic LogSizeTopic = new LogDirTopic();
-        Map<String, Pair<String, Integer>> res =  LogSizeTopic.bytopic(describeLogDirs);
-        Map<String, Pair<Integer, Integer>> result1 = new HashMap<String, Pair<Integer, Integer>>();
-        System.out.println(res);
+        Multimap<String, Long> multimap = ArrayListMultimap.create();
 
-
-        Multimap<String, Integer> map = LinkedHashMultimap.create();
-
-        for (String key : res.keySet()) {
-            map.put(key.substring(0, key.length() - String.valueOf(res.get(key).getValue1()).length() -1), Integer.parseInt(res.get(key).getValue0()));
+        // loop on brokers id to get log size from kafka admin client
+        for (int i=1; i < brokers.split(":").length; i++)
+        {
+            Map<String, Long> res  =  LogSizeTopic.bytopic(admin.describeLogDirs(Arrays.asList(i)).all().get().get(i).get("/var/lib/kafka/data").toString());
+            res.forEach((key, value) ->   multimap.put(key, value));
         }
-//        System.out.println(map);
-        Map<String, Integer> map1 =
-                map.entries()
-                        .stream()
-                        .collect(groupingBy(Map.Entry::getKey,
-                                reducing(1, Map.Entry::getValue, (a, b) -> a + b)));
-//        System.out.println(map1);
-        for (String key : map1.keySet()) {
-            result1.put(key, Pair.with(map1.get(key), map.get(key).size()));
+        System.out.println(multimap);
+
+        // sum values by key (partition) on multimap
+        HashMap<String, Long> resultMap = new HashMap<String, Long>();
+        for(String key : multimap.keySet()){
+            Collection<Long> coll = (Collection<Long>) multimap.get(key);
+            long sum = 0;
+            for(Long i : coll){
+                sum += i;
+            }
+            resultMap.put(key, sum);
         }
-        System.out.println(result1);
+        System.out.println(resultMap);
 
-        System.out.println(admin.describeAcls(AclBindingFilter.ANY).values().get());
+        Multimap<String, Long> testmap = LinkedHashMultimap.create();
+        for (String key : resultMap.keySet()) {
+            testmap.put(key.substring(0, key.lastIndexOf("-")), resultMap.get(key));
+        }
+        System.out.println(testmap);
+        // sum values by key (topic) on multimap
+        HashMap<String, Long> resultMap1 = new HashMap<String, Long>();
+        for(String key : testmap.keySet()){
+            Collection<Long> coll = (Collection<Long>) testmap.get(key);
+            long sum = 0;
+            for(Long i : coll){
+                sum += i;
+            }
+            resultMap1.put(key, sum);
+        }
+        System.out.println(resultMap1);
 
+        // ################################# En cours ... ##################################################################"
 
-//        for (String key : res.keySet()) {
-//            System.out.println("Topic => "+key+", Size => "+res.get(key).getValue0()+", partitions => "+res.get(key).getValue1());
-//            if key.contains("demo-perf-topic") {
-//                partitions
-//                System.out.println(key);
-//            }
-//        }
-
-
-
+        //System.out.println(admin.describeAcls(AclBindingFilter.ANY).values().get());
 
         // insert a document
 //        for (String key : res.keySet()) {
@@ -137,5 +143,6 @@ public class App {
 //            String json = "{_id : '" + ObjectId.get() + "', cluster : '" + Cluster + "', topic : '" + key + "', size : '" + res.get(key) + "', time : '" + new Date().toInstant() +"'}";
 //            collection.insertOne(new Document(BasicDBObject.parse(json)));
 //        }
+
     }
 }

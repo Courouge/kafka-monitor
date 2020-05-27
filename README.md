@@ -13,6 +13,10 @@ docker-compose up --build -d kadmin && docker-compose logs kadmin
  docker-compose exec zookeeper-1 bash -c 'echo stat |nc zookeeper-1 2181'
 ```
 ## kafka
+- List topics 
+```bash
+docker-compose exec kafka-1 bash -c 'KAFKA_OPTS="" kafka-topics --describe --zookeeper zookeeper-1:2181'
+```
 - Create `demo-perf-topic` with 4 partitions and 3 replicas.
 ```bash
 docker-compose exec kafka-1 bash -c 'KAFKA_OPTS="" kafka-topics --create --partitions 4 --replication-factor 3 --topic demo-perf-topic --zookeeper zookeeper-1:2181'
@@ -35,7 +39,7 @@ docker-compose exec kafka-1 bash -c 'KAFKA_OPTS="" kafka-acls --authorizer kafka
 ```
 - Produce random message kafka with sasl_plaintext
 ```bash
-docker-compose exec kafka-1 bash -c 'KAFKA_OPTS="" kafka-producer-perf-test --throughput 500 --num-records 100000000 --topic demo-perf-topic --record-size 100 --producer-props bootstrap.svers=kafka-1:9092 --producer.config=/etc/kafka/secrets/producer.properties'
+docker-compose exec kafka-1 bash -c 'KAFKA_OPTS="" kafka-producer-perf-test --throughput 500 --num-records 100000000 --topic demo-perf-topic --record-size 100 --producer-props bootstrap.servers=kafka-1:9092 --producer.config=/etc/kafka/secrets/producer.properties'
 ```
 
 ## Mongodb
