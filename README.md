@@ -5,7 +5,7 @@ docker-compose up kafka-1 kafka-2 kafka-3
 ```
 ## Dev java kadmin
 ```bash
-docker-compose up --build -d kadmin && docker-compose logs kadmin
+docker-compose up --build -d kadmin && docker-compose logs -f kadmin
 ```
 
 ## zookeeper

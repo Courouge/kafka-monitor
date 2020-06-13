@@ -44,6 +44,7 @@ import org.apache.kafka.common.acl.AccessControlEntryFilter;
 import org.apache.kafka.common.acl.AclOperation;
 import org.apache.kafka.common.acl.AclPermissionType;
 import com.kmanage.LogDirTopic;
+import com.kmanage.Hello;
 
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
@@ -76,7 +77,6 @@ public class App {
     public static void main(String[] args) throws ExecutionException, InterruptedException {
         // Kafka config
         Properties config = new Properties();
-//        String jaasTemplate = "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"%s\" password=\"%s\";";
         String jaasTemplate = "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"%s\" password=\"%s\";";
         String brokers = "kafka-1:9092,kafka-2:9092,kafka-3:9092";
         config.put("bootstrap.servers", brokers);
@@ -86,8 +86,8 @@ public class App {
         AdminClient admin = AdminClient.create(config);
 
         // Mongodb connect
-        char[] password = { 'r', 'o', 'o', 't', 'p', 'a', 's', 's', 'w', 'o', 'r', 'd' };
-        MongoCredential credential = MongoCredential.createCredential("root", "admin", password);
+        String password = "rootpassword";
+        MongoCredential credential = MongoCredential.createCredential("root", "admin", password.toCharArray());
         MongoClient mongoClient = new MongoClient(new ServerAddress("mongodb", 27017), Arrays.asList(credential));
         MongoDatabase database = mongoClient.getDatabase("kafkamonitor");
 

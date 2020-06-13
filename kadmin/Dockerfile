@@ -1,9 +1,8 @@
-FROM maven:3.5-jdk-8 as mavenBuild
+FROM maven:alpine as mavenBuild
 COPY pom.xml pom.xml
 COPY src src
-RUN ["mvn", "install"]
+RUN mvn clean install
 
-FROM java:8
-COPY --from=mavenBuild ./target/*.jar ./
-ENV JAVA_OPTS ""
-CMD [ "bash", "-c", "java ${JAVA_OPTS} -jar *.jar"]
+FROM adoptopenjdk/openjdk14:alpine-jre
+COPY --from=mavenBuild ./target/App-1.0.0.jar ./
+CMD ["java", "-jar", "/App-1.0.0.jar"]
