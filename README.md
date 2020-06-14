@@ -51,6 +51,8 @@ docker-compose exec mongodb bash -c 'mongo admin -u root -p rootpassword'
 ```bash
 show dbs
 show collections
+
+use kafkamonitor
 db.topics.find()
 ```
 - Data Structure Exemple
