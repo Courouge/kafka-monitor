@@ -3,10 +3,13 @@ package com.kmanage;
 import com.google.common.collect.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Iterator;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -14,6 +17,9 @@ import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.requests.DescribeLogDirsResponse.LogDirInfo;
 import org.apache.kafka.common.requests.DescribeLogDirsResponse.ReplicaInfo;
+import org.apache.kafka.clients.admin.DescribeTopicsResult;
+import org.apache.kafka.clients.admin.TopicDescription;
+import org.apache.kafka.common.TopicPartitionInfo;
 
 public class TopicsDiskSize {
     Properties config = new Properties();
@@ -47,5 +53,28 @@ public class TopicsDiskSize {
             }
         } catch (ExecutionException | InterruptedException e) { e.printStackTrace(); }
         return this.MapTopicSize;
+    }
+    public Integer GetNumberOfPartitions(String topic) {
+        try {
+            Map<String,TopicDescription> describeTopicsResult = AdminClient.create(this.config).describeTopics(Collections.singleton(topic)).all().get();
+            for (Map.Entry<String, TopicDescription> entry : describeTopicsResult.entrySet()) {
+                return entry.getValue().partitions().size();
+            }
+        } catch (ExecutionException | InterruptedException e) { e.printStackTrace(); }
+        return 0;
+    }
+    public Integer GetNumberOfReplicas(String topic) {
+        try {
+            int sum = 0;
+            Map<String,TopicDescription> describeTopicsResult = AdminClient.create(this.config).describeTopics(Collections.singleton(topic)).all().get();
+            for (TopicDescription desc: describeTopicsResult.values()) {
+                List<TopicPartitionInfo> partitions = desc.partitions();
+                for (TopicPartitionInfo info: partitions) {
+                    sum += info.replicas().size();
+                }
+            }
+            return (sum / GetNumberOfPartitions(topic));
+        } catch (ExecutionException | InterruptedException e) { e.printStackTrace(); }
+        return 0;
     }
 }

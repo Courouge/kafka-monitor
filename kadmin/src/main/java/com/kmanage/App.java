@@ -27,7 +27,11 @@ public class App {
 
         TopicsDiskSize TopicsSize = new TopicsDiskSize(config);
         HashMap<String, Long> topicsSize = TopicsSize.GetMapTopicSize();
-        System.out.println(topicsSize);
+
+        for(HashMap.Entry<String, Long> entry : topicsSize.entrySet() ){
+            String nice_to_show = "Topic: " + entry.getKey() + ", nb_partitions: " + TopicsSize.GetNumberOfPartitions(entry.getKey()) + ", nb_replica: "+ TopicsSize.GetNumberOfReplicas(entry.getKey())+", Disk: " + entry.getValue() + ", Data: " + topicsSize.get(entry.getKey())/TopicsSize.GetNumberOfReplicas(entry.getKey());
+            System.out.println(nice_to_show);
+        }
 
         // Mongodb connect
         String password = "rootpassword";
